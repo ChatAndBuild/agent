@@ -23,8 +23,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
 
   // Load existing video if character has video_id
   useEffect(() => {
@@ -55,13 +53,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
       generateVideoFromResponse();
     }
   }, [aiResponse]);
-
-  useEffect(() => {
-    if (videoUrl && videoRef) {
-      videoRef.load();
-      setIsPlaying(true);
-    }
-  }, [videoUrl, videoRef]);
 
   const generateVideoFromResponse = async () => {
     if (!selectedCharacter || !aiResponse) return;
@@ -120,17 +111,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
     }
   };
 
-  const togglePlayPause = () => {
-    if (videoRef) {
-      if (isPlaying) {
-        videoRef.pause();
-      } else {
-        videoRef.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
@@ -141,27 +121,11 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
               style={{ aspectRatio: "9/16" }}
             >
               <video
-                ref={(ref) => setVideoRef(ref)}
+                key={videoUrl}
                 src={videoUrl}
                 autoPlay
                 className="absolute inset-0 w-full h-full object-cover"
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
               />
-
-              {/* Play/Pause overlay */}
-              <button
-                onClick={togglePlayPause}
-                className="absolute inset-0 w-full h-full bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center group"
-              >
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-50 rounded-full p-3">
-                  {isPlaying ? (
-                    <Pause className="h-8 w-8 text-white" />
-                  ) : (
-                    <Play className="h-8 w-8 text-white" />
-                  )}
-                </div>
-              </button>
             </div>
 
             {selectedCharacter?.name && (

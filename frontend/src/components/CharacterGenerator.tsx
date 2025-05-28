@@ -502,7 +502,6 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
                     key={videoUrl}
                     src={videoUrl}
                     autoPlay
-                    muted
                     className="absolute inset-0 w-full h-full rounded-lg border border-indigo-200 object-cover"
                   />
                 </div>
