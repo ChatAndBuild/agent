@@ -269,7 +269,7 @@ const AgentSimulator: React.FC<AgentSimulatorProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[500px]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message: any, index: number) => (
           <div
             key={index}

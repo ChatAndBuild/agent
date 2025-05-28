@@ -23,6 +23,8 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState("");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
 
   // Load existing video if character has video_id
   useEffect(() => {
@@ -41,6 +43,14 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
 
     loadExistingVideo();
   }, [selectedCharacter]);
+
+  // Auto-play video when loaded
+  useEffect(() => {
+    if (videoUrl && videoRef) {
+      videoRef.load();
+      setIsPlaying(true);
+    }
+  }, [videoUrl, videoRef]);
 
   // Generate video when AI response is received
   useEffect(() => {
@@ -121,10 +131,13 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
               style={{ aspectRatio: "9/16" }}
             >
               <video
+                ref={(ref) => setVideoRef(ref)}
                 key={videoUrl}
                 src={videoUrl}
                 autoPlay
                 className="absolute inset-0 w-full h-full object-cover"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
               />
             </div>
 

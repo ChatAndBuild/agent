@@ -22,9 +22,9 @@ const AgentSimulatorTab: React.FC<AgentSimulatorTabProps> = ({
   const [aiResponse, setAiResponse] = useState<string>("");
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
+    <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Left Panel - Video Preview */}
-      <div className="w-full lg:w-2/5 bg-white/70 backdrop-blur-md rounded-xl overflow-hidden border border-indigo-100/50 shadow-xl transition-all duration-300 hover:shadow-indigo-100/30 hover:translate-y-[-2px]">
+      <div className="w-full lg:w-2/5 bg-white/70 backdrop-blur-md rounded-xl overflow-hidden border border-indigo-100/50 shadow-xl transition-all duration-300 hover:shadow-indigo-100/30 hover:translate-y-[-2px] flex flex-col">
         <div className="p-4 border-b border-indigo-100/50 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 backdrop-blur-sm flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg text-white shadow-md">
@@ -35,7 +35,7 @@ const AgentSimulatorTab: React.FC<AgentSimulatorTabProps> = ({
             </h2>
           </div>
         </div>
-        <div className="bg-white/90 backdrop-blur-sm h-[500px]">
+        <div className="bg-white/90 backdrop-blur-sm flex-1 min-h-[500px]">
           <VideoPreview
             aiResponse={aiResponse}
             selectedCharacter={selectedCharacter}
