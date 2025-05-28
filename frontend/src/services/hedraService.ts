@@ -40,8 +40,7 @@ interface SupportedVoice {
 
 const HEDRA_V2_AI_MODEL_ID = import.meta.env.VITE_HEDRA_V2_AI_MODEL_ID;
 
-// const BACKEND_API_URL = "https://nfa-api.chatandbuild.com";
-const BACKEND_API_URL = "http://localhost:3000";
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 // Get available elevenlabs voices
 export const getAvailableVoices = async () => {
