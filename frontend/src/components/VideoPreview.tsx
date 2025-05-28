@@ -144,7 +144,6 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
                 ref={(ref) => setVideoRef(ref)}
                 src={videoUrl}
                 autoPlay
-                loop
                 className="absolute inset-0 w-full h-full object-cover"
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
