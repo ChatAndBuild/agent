@@ -83,7 +83,8 @@ export interface Character {
   name: string;
   description: string;
   voice_id: string;
-  image_preview: string;
+  image_id: string;
+  video_id?: string;
 }
 
 // Voice

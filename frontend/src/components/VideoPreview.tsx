@@ -6,6 +6,7 @@ import {
   uploadAsset,
   generateVideo,
   pollVideoStatus,
+  getAsset,
 } from "../services/hedraService";
 import { Character } from "../types";
 
@@ -25,13 +26,31 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
 
+  // Load existing video if character has video_id
+  useEffect(() => {
+    const loadExistingVideo = async () => {
+      if (selectedCharacter?.video_id) {
+        try {
+          const assetData = await getAsset(selectedCharacter.video_id, "video");
+          if (assetData[0]?.asset?.url) {
+            setVideoUrl(assetData[0].asset.url);
+          }
+        } catch (error) {
+          console.error("Error loading existing video:", error);
+        }
+      }
+    };
+
+    loadExistingVideo();
+  }, [selectedCharacter]);
+
   // Generate video when AI response is received
   useEffect(() => {
     if (
       aiResponse &&
       selectedCharacter &&
       selectedCharacter.voice_id &&
-      selectedCharacter.image_preview
+      selectedCharacter.image_id
     ) {
       generateVideoFromResponse();
     }
@@ -52,8 +71,8 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
     setStep("");
 
     try {
-      // Get image ID from localStorage (set by CharacterGenerator)
-      const imageId = localStorage.getItem("image_id");
+      // Use image ID from selected character
+      const imageId = selectedCharacter.image_id;
       if (!imageId) {
         throw new Error("No character image found");
       }

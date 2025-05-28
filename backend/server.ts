@@ -160,6 +160,29 @@ app.post(
   }
 );
 
+app.get(
+  "/api/hedra/assets/:id/:type",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id;
+      const type = req.params.type;
+      const url: string = `${HEDRA_V2_API_URL}/assets?ids=${id}&type=${type}`;
+      const headers = {
+        "X-API-Key": HEDRA_V2_API_KEY,
+      };
+
+      const { data }: AxiosResponse = await axios.get(url, { headers });
+      res.json({ data } as HedraAssetResponse);
+    } catch (error) {
+      console.error("Error creating assets:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
 app.post(
   "/api/hedra/assets/upload",
   async (req: Request, res: Response): Promise<void> => {

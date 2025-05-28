@@ -19,6 +19,7 @@ import {
   uploadAsset,
   generateVideo,
   pollVideoStatus,
+  getAsset,
 } from "../services/hedraService";
 import { Character, Voice } from "../types";
 
@@ -36,7 +37,8 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
   const [availableVoices, setAvailableVoices] = useState<Voice[]>([]);
   const [imageId, setImageId] = useState<string>("");
   const [audioId, setAudioId] = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [videoId, setVideoId] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [testScript, setTestScript] = useState(
     "Hello! I'm your AI assistant focused on competitive intelligence. How can I help you analyze market trends and competitor activities today?"
@@ -58,15 +60,43 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
 
   // Load voices and existing characters on component mount
   useEffect(() => {
-    setImageId(localStorage.getItem("image_id") || "");
-    setImagePreview(localStorage.getItem("preview_image") || "");
-    setCharacterName(localStorage.getItem("character_name") || "");
-    setCharacterDescription(
-      localStorage.getItem("character_description") ||
-        "An AI assistant focused on competitive intelligence, helping users analyze market trends and competitor activities."
-    );
+    const loadInitialData = async () => {
+      const storedImageId = localStorage.getItem("image_id") || "";
+      const storedVideoId = localStorage.getItem("video_id") || "";
 
-    const fetchVoices = async () => {
+      setImageId(storedImageId);
+      setVideoId(storedVideoId);
+      setCharacterName(localStorage.getItem("character_name") || "");
+      setCharacterDescription(
+        localStorage.getItem("character_description") ||
+          "An AI assistant focused on competitive intelligence, helping users analyze market trends and competitor activities."
+      );
+
+      // Load image URL if image ID exists
+      if (storedImageId) {
+        try {
+          const assetData = await getAsset(storedImageId, "image");
+          if (assetData[0]?.asset?.url) {
+            setImageUrl(assetData[0].asset.url);
+          }
+        } catch (error) {
+          console.error("Error loading image:", error);
+        }
+      }
+
+      // Load video URL if video ID exists
+      if (storedVideoId) {
+        try {
+          const assetData = await getAsset(storedVideoId, "video");
+          if (assetData[0]?.asset?.url) {
+            setVideoUrl(assetData[0].asset.url);
+          }
+        } catch (error) {
+          console.error("Error loading video:", error);
+        }
+      }
+
+      // Load voices
       try {
         const voices = await getAvailableVoices();
         setAvailableVoices(voices);
@@ -74,12 +104,12 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
           setSelectedVoice(localStorage.getItem("voice_id") || voices[0].id);
         }
       } catch (error) {
-        console.error("Error fetching initial data:", error);
+        console.error("Error fetching voices:", error);
         setError("Failed to load voices. Please try again.");
       }
     };
 
-    fetchVoices();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -130,8 +160,11 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
 
           setAnimationStep("Processing video...");
           setAnimationProgress(80);
-          const { url } = await pollVideoStatus(id);
+          const { url, asset_id } = await pollVideoStatus(id);
+
           setVideoUrl(url);
+          setVideoId(asset_id);
+          localStorage.setItem("video_id", asset_id);
 
           setAnimationProgress(100);
           setAnimationStep("Complete!");
@@ -166,22 +199,20 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
 
       setIsUploading(true);
 
-      const { filename } = await uploadFile(file, "image");
-      const { id, name } = await createAsset("image", filename);
-      const { asset } = await uploadAsset(id, name);
+      try {
+        const { filename } = await uploadFile(file, "image");
+        const { id, name } = await createAsset("image", filename);
+        const { asset } = await uploadAsset(id, name);
 
-      localStorage.setItem("image_id", id);
-      localStorage.setItem("image_url", asset.url);
-
-      setImageId(id);
-      setIsUploading(false);
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        localStorage.setItem("preview_image", reader.result as string);
-        setImagePreview(reader.result as string);
-      };
+        localStorage.setItem("image_id", id);
+        setImageId(id);
+        setImageUrl(asset.url);
+        setIsUploading(false);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        setError("Failed to upload image. Please try again.");
+        setIsUploading(false);
+      }
     }
   };
 
@@ -197,13 +228,8 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
       return;
     }
 
-    if (!characterName.trim()) {
-      setError("Please enter a character name");
-      return;
-    }
-
-    if (!imagePreview.trim()) {
-      setError("Please character image");
+    if (!imageId) {
+      setError("Please upload a character image");
       return;
     }
 
@@ -211,7 +237,8 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
       name: characterName,
       description: characterDescription,
       voice_id: selectedVoice,
-      image_preview: imagePreview,
+      image_id: imageId,
+      video_id: videoId,
     });
   };
 
@@ -254,14 +281,22 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
       "An AI assistant focused on competitive intelligence, helping users analyze market trends and competitor activities."
     );
     setSelectedVoice(availableVoices.length > 0 ? availableVoices[0].id : "");
-    // setImageUrl("");
-    setImagePreview("");
+    setImageUrl("");
     setImageId("");
+    setVideoUrl("");
+    setVideoId("");
     setTestScript(
       "Hello! I'm your AI assistant focused on competitive intelligence. How can I help you analyze market trends and competitor activities today?"
     );
     setError("");
     setSuccess("");
+
+    // Clear localStorage
+    localStorage.removeItem("character_name");
+    localStorage.removeItem("character_description");
+    localStorage.removeItem("voice_id");
+    localStorage.removeItem("image_id");
+    localStorage.removeItem("video_id");
   };
 
   return (
@@ -391,21 +426,22 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
 
           <div className="space-y-4">
             <div className="flex items-center justify-center">
-              {imagePreview ? (
+              {imageUrl ? (
                 <div
                   className="relative"
                   style={{ width: "200px", height: "356px" }}
                 >
                   <img
-                    src={imagePreview}
+                    src={imageUrl}
                     alt="Character preview"
                     className="absolute inset-0 w-full h-full object-cover rounded-lg border-2 border-indigo-300"
                   />
                   <button
                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 transform translate-x-1/3 -translate-y-1/3 z-10"
                     onClick={() => {
-                      setImagePreview("");
+                      setImageUrl("");
                       setImageId("");
+                      localStorage.removeItem("image_id");
                     }}
                   >
                     <X className="h-4 w-4" />
@@ -466,6 +502,8 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
                     key={videoUrl}
                     src={videoUrl}
                     autoPlay
+                    loop
+                    muted
                     className="absolute inset-0 w-full h-full rounded-lg border border-indigo-200 object-cover"
                   />
                 </div>
@@ -560,10 +598,7 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
             }`}
             onClick={handleCreateCharacter}
             disabled={
-              isCreating ||
-              !characterName ||
-              !characterDescription ||
-              !imagePreview
+              isCreating || !characterName || !characterDescription || !imageId
             }
           >
             {isCreating ? (

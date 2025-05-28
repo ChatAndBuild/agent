@@ -93,6 +93,17 @@ export const uploadAsset = async (id: string, name: string) => {
   }
 };
 
+// Get asset details by ID
+export const getAsset = async (id: string, type: string) => {
+  try {
+    const url = `${BACKEND_API_URL}/api/hedra/assets/${id}/${type}`;
+    const { data } = await axios.get(url);
+    return data.data;
+  } catch (error) {
+    console.error("Error getting asset:", error);
+  }
+};
+
 // Upload file
 export const uploadFile = async (file: File, type: string) => {
   try {
