@@ -30,8 +30,8 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB file size limit
-    fieldSize: 5 * 1024 * 1024, // 5MB field size limit
+    fileSize: 20 * 1024 * 1024, // 5MB file size limit
+    fieldSize: 20 * 1024 * 1024, // 5MB field size limit
     files: 10, // Maximum number of files
     parts: 100, // Maximum number of parts
   },
@@ -40,10 +40,10 @@ const upload = multer({
 app.use(cors());
 
 // Middleware - Configure request size limits
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ limit: "5mb", extended: true }));
-app.use(bodyParser.json({ limit: "5mb" }));
-app.use(bodyParser.urlencoded({ limit: "5mb", extended: true }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
+app.use(bodyParser.json({ limit: "20mb" }));
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: true }));
 
 // Interface definitions
 interface UploadResponse {
