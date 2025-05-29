@@ -30,8 +30,8 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 5MB file size limit
-    fieldSize: 20 * 1024 * 1024, // 5MB field size limit
+    fileSize: 5 * 1024 * 1024, // 5MB file size limit
+    fieldSize: 5 * 1024 * 1024, // 5MB field size limit
     files: 10, // Maximum number of files
     parts: 100, // Maximum number of parts
   },
@@ -40,10 +40,10 @@ const upload = multer({
 app.use(cors());
 
 // Middleware - Configure request size limits
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ limit: "20mb", extended: true }));
-app.use(bodyParser.json({ limit: "20mb" }));
-app.use(bodyParser.urlencoded({ limit: "20mb", extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
+app.use(bodyParser.json({ limit: "5mb" }));
+app.use(bodyParser.urlencoded({ limit: "5mb", extended: true }));
 
 // Interface definitions
 interface UploadResponse {
@@ -413,6 +413,61 @@ app.post(
       });
     } catch (error) {
       console.error("Error calling OpenAI API:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+// OpenAI Whisper API endpoint
+app.post(
+  "/api/openai/whisper",
+  upload.single("audio"),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.file) {
+        res.status(400).json({
+          success: false,
+          error: "No audio file provided",
+        });
+        return;
+      }
+
+      if (!OPENAI_API_KEY) {
+        res.status(500).json({
+          success: false,
+          error: "OpenAI API key not configured",
+        });
+        return;
+      }
+
+      // Create form data for OpenAI Whisper API
+      const formData = new FormData();
+      formData.append("file", req.file.buffer, {
+        filename: "audio.webm",
+        contentType: req.file.mimetype || "audio/webm",
+      });
+      formData.append("model", "whisper-1");
+
+      const headers = {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        ...formData.getHeaders(),
+      };
+
+      const { data }: AxiosResponse = await axios.post(
+        "https://api.openai.com/v1/audio/transcriptions",
+        formData,
+        { headers }
+      );
+
+      res.json({
+        success: true,
+        text: data.text,
+      });
+    } catch (error) {
+      console.error("Error calling OpenAI Whisper API:", error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
