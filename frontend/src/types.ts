@@ -85,6 +85,7 @@ export interface Character {
   voice_id: string;
   image_id: string;
   video_id?: string;
+  idle_video_id?: string;
 }
 
 // Voice

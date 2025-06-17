@@ -1,19 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Send,
   RefreshCw,
-  Brain,
   User,
   Bot,
-  Sparkles,
-  Zap,
-  Lightbulb,
   Wand2,
   Info,
   Volume2,
   Play,
-  Video,
-  Loader2,
 } from "lucide-react";
 import {
   AssistantMessage,
@@ -30,13 +24,6 @@ import {
   sendMessageToClaude,
   clearClaudeConversationHistory,
 } from "../services/anthropicService";
-import {
-  createAudioFile,
-  createAsset,
-  uploadAsset,
-  generateVideo,
-  pollVideoStatus,
-} from "../services/hedraService";
 
 interface AgentSimulatorProps {
   selectedModel: string;
@@ -152,11 +139,6 @@ const AgentSimulator: React.FC<AgentSimulatorProps> = ({
         if (onAiResponse) {
           onAiResponse(assistantMessage.content);
         }
-
-        // Generate voice for the response if character ID is provided
-        if (characterId) {
-          generateVoiceResponse(characterId, assistantMessage.content);
-        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -172,25 +154,6 @@ const AgentSimulator: React.FC<AgentSimulatorProps> = ({
       };
       setMessages((prev) => [...prev, errorMessage]);
     }
-  };
-
-  const generateVoiceResponse = async (characterId: string, text: string) => {
-    setIsGeneratingVoice(true);
-    // try {
-    //   const speech = await generateSpeech(characterId, text);
-    //   if (speech && speech.url) {
-    //     setCurrentAudioUrl(speech.url);
-    //     if (audioRef.current) {
-    //       audioRef.current.src = speech.url;
-    //       audioRef.current.load();
-    //       audioRef.current.play();
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.error("Error generating voice response:", error);
-    // } finally {
-    //   setIsGeneratingVoice(false);
-    // }
   };
 
   const enhancePrompt = () => {

@@ -12,6 +12,7 @@ import { hedraRoutes } from "./routes/hedraRoutes";
 import { elevenLabsRoutes } from "./routes/elevenLabsRoutes";
 import { openaiRoutes } from "./routes/openaiRoutes";
 import { anthropicRoutes } from "./routes/anthropicRoutes";
+import { klingRoutes } from "./routes/klingRoutes";
 
 const app = express();
 const PORT: number = 3000;
@@ -30,6 +31,7 @@ app.use("/api/hedra", hedraRoutes);
 app.use("/api/elevenlabs", elevenLabsRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/anthropic", anthropicRoutes);
+app.use("/api/kling", klingRoutes);
 
 // Start the server
 app.listen(PORT, (): void => {

@@ -12,8 +12,6 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  getAvailableVoices,
-  createAudioFile,
   createAsset,
   uploadFile,
   uploadAsset,
@@ -22,10 +20,16 @@ import {
   getAsset,
 } from "../services/hedraService";
 import { Character, Voice } from "../types";
+import {
+  createAudioFile,
+  getAvailableVoices,
+} from "../services/elevenlabsService";
 
 interface CharacterGeneratorProps {
   onCharacterCreated: (character: Character) => void;
 }
+
+const BACKGROUND_NOISE = "41e7f709-a1ab-4ca9-90b6-0c098d4eae7f";
 
 const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
   onCharacterCreated,
@@ -53,6 +57,9 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
   const [success, setSuccess] = useState<string>("");
   const [animationProgress, setAnimationProgress] = useState(0);
   const [animationStep, setAnimationStep] = useState<string>("");
+  const [isGeneratingIdleVideo, setIsGeneratingIdleVideo] = useState(false);
+  const [idleVideoProgress, setIdleVideoProgress] = useState(0);
+  const [idleVideoStep, setIdleVideoStep] = useState<string>("");
 
   // Refs
   const previewAudioRef = useRef<HTMLAudioElement>(null);
@@ -205,6 +212,7 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
         const { asset } = await uploadAsset(id, name);
 
         localStorage.setItem("image_id", id);
+        localStorage.removeItem("idle_video_id");
         setImageId(id);
         setImageUrl(asset.url);
         setIsUploading(false);
@@ -233,13 +241,60 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
       return;
     }
 
-    onCharacterCreated({
-      name: characterName,
-      description: characterDescription,
-      voice_id: selectedVoice,
-      image_id: imageId,
-      video_id: videoId,
-    });
+    setIsCreating(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      if (!localStorage.getItem("idle_video_id")) {
+        setIsGeneratingIdleVideo(true);
+        setIdleVideoProgress(0);
+        setIdleVideoStep("Generating idle video...");
+
+        setIdleVideoProgress(30);
+        setIdleVideoStep("Processing character image...");
+        const { id } = await generateVideo(imageId, BACKGROUND_NOISE);
+
+        setIdleVideoProgress(60);
+        setIdleVideoStep("Rendering idle animation...");
+        const { asset_id } = await pollVideoStatus(id);
+
+        setIdleVideoProgress(90);
+        setIdleVideoStep("Finalizing character...");
+        localStorage.setItem("idle_video_id", asset_id);
+
+        setIdleVideoProgress(100);
+        setIdleVideoStep("Complete!");
+
+        // Reset idle video progress after a delay
+        setTimeout(() => {
+          setIsGeneratingIdleVideo(false);
+          setIdleVideoProgress(0);
+          setIdleVideoStep("");
+        }, 1000);
+      }
+
+      const idleVideoId = localStorage.getItem("idle_video_id");
+
+      onCharacterCreated({
+        name: characterName,
+        description: characterDescription,
+        voice_id: selectedVoice,
+        image_id: imageId,
+        video_id: videoId,
+        idle_video_id: idleVideoId!,
+      });
+
+      setSuccess("Character created successfully!");
+    } catch (error) {
+      console.error("Error creating character:", error);
+      setError("Failed to create character. Please try again.");
+      setIsGeneratingIdleVideo(false);
+      setIdleVideoProgress(0);
+      setIdleVideoStep("");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   // Create animation for testing
@@ -582,7 +637,7 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
           <button
             className="flex-1 flex items-center justify-center gap-2 p-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             onClick={handleReset}
-            disabled={isGeneratingAnimation}
+            disabled={isGeneratingAnimation || isCreating}
           >
             <RefreshCw className="h-4 w-4" />
             <span>Reset</span>
@@ -608,6 +663,39 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Loading Overlay for Idle Video Generation */}
+      {isGeneratingIdleVideo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="mb-4">
+                <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Creating Character
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Please wait while we generate your character's idle animation...
+              </p>
+
+              {/* Progress indicator */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{idleVideoStep}</span>
+                  <span className="text-gray-600">{idleVideoProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${idleVideoProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

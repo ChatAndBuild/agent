@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Video, Loader2, Play, Pause } from "lucide-react";
 import {
-  createAudioFile,
   createAsset,
   uploadAsset,
   generateVideo,
@@ -9,6 +8,7 @@ import {
   getAsset,
 } from "../services/hedraService";
 import { Character } from "../types";
+import { createAudioFile } from "../services/elevenlabsService";
 
 interface VideoPreviewProps {
   aiResponse?: string;
@@ -23,15 +23,25 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState("");
+  const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
+  const [isPlayingNewVideo, setIsPlayingNewVideo] = useState(false);
 
   // Load existing video if character has video_id
   useEffect(() => {
     const loadExistingVideo = async () => {
-      if (selectedCharacter?.video_id) {
+      if (selectedCharacter?.idle_video_id) {
         try {
-          const assetData = await getAsset(selectedCharacter.video_id, "video");
+          const assetData = await getAsset(
+            selectedCharacter.idle_video_id,
+            "video"
+          );
           if (assetData[0]?.asset?.url) {
-            setVideoUrl(assetData[0].asset.url);
+            const url = assetData[0].asset.url;
+            setExistingVideoUrl(url);
+            // Only set as current video if we're not playing a new video
+            if (!isPlayingNewVideo) {
+              setVideoUrl(url);
+            }
           }
         } catch (error) {
           console.error("Error loading existing video:", error);
@@ -93,7 +103,9 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
       setProgress(80);
       const { url } = await pollVideoStatus(videoId);
 
+      // Set the new video and mark that we're playing a new video
       setVideoUrl(url);
+      setIsPlayingNewVideo(true);
       setProgress(100);
       setStep("Complete!");
 
@@ -124,6 +136,14 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({
                 key={videoUrl}
                 src={videoUrl}
                 autoPlay
+                loop={!isPlayingNewVideo} // Loop only if playing existing video
+                onEnded={() => {
+                  // When new video ends, go back to existing video
+                  if (isPlayingNewVideo && existingVideoUrl) {
+                    setVideoUrl(existingVideoUrl);
+                    setIsPlayingNewVideo(false);
+                  }
+                }}
                 className="absolute inset-0 w-full h-full object-cover"
               />
             </div>
