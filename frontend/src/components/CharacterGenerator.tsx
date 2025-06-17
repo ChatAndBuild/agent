@@ -662,40 +662,30 @@ const CharacterGenerator: React.FC<CharacterGeneratorProps> = ({
             <span>{isCreating ? "Creating..." : "Use Character"}</span>
           </button>
         </div>
-      </div>
 
-      {/* Loading Overlay for Idle Video Generation */}
-      {isGeneratingIdleVideo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        {/* Progress indicator for idle video generation */}
+        {isGeneratingIdleVideo && (
+          <div className="mt-3 space-y-2">
             <div className="text-center">
-              <div className="mb-4">
-                <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Creating Character
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Please wait while we generate your character's idle animation...
+              <p className="text-sm text-gray-600 mb-2">
+                Generating character's idle animation...
               </p>
-
-              {/* Progress indicator */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{idleVideoStep}</span>
-                  <span className="text-gray-600">{idleVideoProgress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${idleVideoProgress}%` }}
-                  />
-                </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">{idleVideoStep}</span>
+                <span className="text-gray-600">{idleVideoProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${idleVideoProgress}%` }}
+                />
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
